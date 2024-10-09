@@ -212,3 +212,8 @@ footer nav ul {
 
 
 
+/* filtering styles  */
+
+.display {
+	display: none;
+}
