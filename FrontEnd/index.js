@@ -21,26 +21,43 @@ async function fetchCategories() {
 // Functions to render images on home page
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const awaitWorks = await fetchWorks();
-  const awaitCategories = await fetchCategories();
-  const section = document.getElementById('portfolio');
-  const gallery = document.getElementsByClassName('gallery');
-  const buttonsContainer = document.getElementsByClassName('filter-buttons-container');
+const worksData = await fetchWorks();
+const categoriesData = await fetchCategories();
+// Get elements from the DOM
+const portfolioSection = document.getElementById('portfolio');
+const gallery = document.getElementsByClassName('gallery')[0]; // Assuming you need the first gallery
+const filterButtonsContainer = document.getElementsByClassName('filter-buttons-container')[0];
 
-  // Add the HTML to the div
+// Helper function to create a button element
+function createButton(id, classNames, textContent) {
+  const button = document.createElement('button');
+  button.id = id;
+  button.classList.add(...classNames);
+  button.textContent = textContent;
+  return button;
+}
 
-  const buttonFilters = `
-          <button class="button-filter all">All</button>
-          <button class="button-filter objects">Objects</button>
-          <button class="button-filter apartments">Apartments</button>
-          <button class="button-filter hotels-&-restaurants">Hotels & Restaurant</button> `;
+// Create filter buttons from categories data
+const categoryButtons = categoriesData.map((category) => {
+  const classNames = ['btn', category.name.replace(/\s+/g, '-').toLowerCase(), 'button-filter'];
+  return createButton('categoryButton', classNames, category.name);
+});
 
-  buttonsContainer[0].innerHTML = buttonFilters;
+// Create "All" button
+const allButton = createButton('allButton', ['btn', 'all', 'button-filter'], 'All');
+
+// Append "All" button to the container
+filterButtonsContainer.appendChild(allButton);
+
+// Append category buttons to the container
+categoryButtons.forEach((button) => {
+  filterButtonsContainer.appendChild(button);
+});
 
   let works = '';
 
-  awaitWorks.forEach((work) => {
-    const category = awaitCategories.find((element) => element.id === work.category.id).name.replace(/\s+/g, '-');
+  worksData.forEach((work) => {
+    const category = categoriesData.find((element) => element.id === work.category.id).name.replace(/\s+/g, '-');
 
     works += `
     <figure class="work-item ${category.toLowerCase()} ${work.id}">
@@ -49,22 +66,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     </figure> `;
   });
 
-  gallery[0].innerHTML = works;
+  gallery.innerHTML = works;
 
   const buttons = document.querySelectorAll('.button-filter');
   const renderWorks = document.querySelectorAll('.work-item');
 
   // Loop through all buttons and add event listeners dynamically
 
-
   buttons.forEach((button) => {
     button.addEventListener('click', () => {
-      const category = button.className.split(' ')[1]; 
-      
+      const category = button.className.split(' ')[1];
+
       if (category === 'all') {
-        gallery[0].innerHTML = works;
+        gallery.innerHTML = works;
       } else {
-        let filterWorks = ''; 
+        
+        let filterWorks = '';
         
         renderWorks.forEach((renderWork) => {
           // Check if the job category matches the button category
@@ -72,10 +89,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             filterWorks += renderWork.outerHTML; // Add matching job's HTML to filterWorks
           }
         });
-  
-        gallery[0].innerHTML = filterWorks; // Display filtered works
+
+        gallery.innerHTML = filterWorks; // Display filtered works
       }
     });
   });
-  
 });
