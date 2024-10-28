@@ -102,7 +102,6 @@ const passwordInput = document.getElementById('userPassword');
 const loginButton = document.getElementById('login-button');
 
 loginButton.addEventListener('click', async () => {
-
   const request = new Request('http://localhost:5678/api/users/login', {
     method: 'POST',
     headers: {
@@ -124,8 +123,9 @@ loginButton.addEventListener('click', async () => {
     console.log(json);
     emailInput.value = '';
     passwordInput.value = '';
-
+    window.location.href = 'index.html';
+    
   } catch (error) {
     console.error(error.message);
-  }
+  };
 });
