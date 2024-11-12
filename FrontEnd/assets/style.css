@@ -206,10 +206,12 @@ li:hover {
 #introduction p {
   margin-bottom: 0.5em;
 }
+
 #portfolio h2 {
   text-align: center;
   margin-bottom: 1em;
 }
+
 .gallery {
   width: 100%;
   display: grid;
@@ -269,9 +271,17 @@ footer nav ul {
   margin: 2em;
 }
 
+.edit-container {
+  padding: 8%;
+}
+
+#buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .filter-buttons-container {
-  display: inline-block; /* Make elements inline-block */
-  vertical-align: middle;
   gap: 30px;
   margin-bottom: 4%;
   margin-top: 4%;
@@ -291,6 +301,37 @@ footer nav ul {
 .button-filter:hover {
   background-color: #1d6154;
   color: #ffff;
+}
+
+.edit-mode-inactive {
+  display: none;
+}
+
+.edit-mode-active {
+  display: flex;
+  justify-content: center;
+  width: 100vw; /* Makes it take up the full viewport width */
+  position: relative; /* Allows it to be positioned independently */
+  left: 50%; /* Starts it from the center of the body */
+  transform: translateX(-50%); /* Centers it horizontally across the viewport */
+  background-color: black; /* Optional styling */
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.edtid-title {
+  color: #ffff;
+  font-family: 'Work Sans';
+  display: inline-block; /* Make elements inline-block */
+  vertical-align: middle; /* Align them vertically */
+  font-size: 16px;
+}
+
+#login-svg {
+  color: #ffff;
+  display: inline-block; /* Make elements inline-block */
+  vertical-align: middle; /* Align them vertically */
+  margin-right: 5px;
 }
 
 #edit-svg {
