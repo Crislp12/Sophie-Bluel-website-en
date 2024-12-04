@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const worksData = await fetchWorks();
   const categoriesData = await fetchCategories();
 
+  // check if token aveliable
+  displayContentOnLogin();
+
   // Get elements from the DOM
 
   const gallery = document.getElementsByClassName('gallery')[0];
@@ -77,8 +80,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  displayContentOnLogin();
-
   createFilterbuttons();
 
   // edit mode
@@ -89,6 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const addPhotoButton = document.getElementById('add-photo');
   const fileInput = document.getElementById('input-file');
   const arrow = document.querySelector('.arrow-edit');
+  const confirmButton = document.querySelector('#confirm-photo');
 
   openButton.addEventListener('click', () => {
     modal.showModal();
@@ -98,36 +100,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     modal.close();
   });
 
-  arrow.addEventListener('click', ()=> {
+  arrow.addEventListener('click', () => {
     const confirmButton = document.querySelector('#confirm-photo');
-    const uploadImgContaienr = document.querySelector('.add-to-gallery')
+    const uploadImgContaienr = document.querySelector('.add-to-gallery');
     arrow.style.fill = 'white';
 
     editGallary.style.display = 'grid';
     confirmButton.style.display = 'none';
     addPhotoButton.style.display = 'block';
-    uploadImgContaienr.style.display = 'none'
+    uploadImgContaienr.style.display = 'none';
+  });
 
-  })
-
-  addPhotoButton.addEventListener('click', async () => {
+  addPhotoButton.addEventListener('click', () => {
     const confirmButton = document.querySelector('#confirm-photo');
-    const uploadImgContaienr = document.querySelector('.add-to-gallery')
+    const uploadImgContaienr = document.querySelector('.add-to-gallery');
     arrow.style.fill = 'black';
 
     editGallary.style.display = 'none';
     confirmButton.style.display = 'block';
     addPhotoButton.style.display = 'none';
-    uploadImgContaienr.style.display = 'block'
+    uploadImgContaienr.style.display = 'block';
   });
 
   fileInput.addEventListener('change', () => {
-  const uploadImg = document.getElementById('uploadImg');
-  const svg = document.querySelector('.img-svg')
+    const uploadImg = document.getElementById('uploadImg');
+    const svg = document.querySelector('.img-svg');
 
     svg.style.display = 'none';
     uploadImg.style.display = 'block';
     uploadImg.src = URL.createObjectURL(fileInput.files[0]);
+  });
+
+  confirmButton.addEventListener('click', () => {
+    const itemTitle = document.getElementById('title-input');
+    const categories =document.getElementById('categories');
+    
+    console.log(itemTitle.value)
+    console.log(categories.value)
+    
   });
 
   getEditImgs(worksData, editGallary, allWorks);
@@ -182,7 +192,7 @@ function getEditImgs(worksData, editGallary) {
     const div = document.createElement('div');
     div.setAttribute('data-custom', `${work.id}`);
     div.classList.add('edit-card');
-    div.style.backgroundImage = `url(${work.imageUrl})`;
+    div.style.backgroundImage = `url(${work.imageUrl})`
 
     const deleteButton = document.createElement('button');
     deleteButton.classList.add('span-svg');
@@ -201,13 +211,24 @@ function getEditImgs(worksData, editGallary) {
 
     deleteButton.addEventListener('click', async () => {
       const id = div.getAttribute('data-custom');
+      const token = sessionStorage.getItem('authToken')
+
+      console.log(token)
 
       if (confirm('Are you sure you want to delete this post?')) {
         try {
-          const response = await fetch(`http://localhost:5678/api/works/${id}`, {
+          const response = await fetch(`http://localhost:5678/api/works/${id}`,{
             method: 'DELETE',
+            headers: {
+              "Content-type": "application/jason",
+              "Authorization": `Bearer ${token}`,
+            }
           });
-          console.log('Post deleted');
+
+          if(!response.ok){
+            throw new Error(`HTTP eeror! status: ${response.status}`)
+          }
+
         } catch (error) {
           console.error('Error:', error);
         }

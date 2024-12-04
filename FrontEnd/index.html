@@ -121,7 +121,7 @@
 
                   <form  id="cartegorylist" >
                     <label for="title-input" style="font-size: 16px; font-family: 'Work Sans', sans-serif; color: #3D3D3D;">Title</label><br />
-                    <input type="text" id="title-input" name="title"/><br />
+                    <input type="text" id="title-input" name="title" required/><br />
                     
                     <label for="categories" style="font-size: 16px; font-family: 'Work Sans', sans-serif; color: #3D3D3D;">Category</label><br />
                   <select id="categories" name="cartegorylist" form="cartegorylist" >
@@ -135,9 +135,8 @@
                   
                 </div>
                 <hr />
-
-                <button id="add-photo" class="add-photo1">Add photo</button>
-                <button id="confirm-photo" style="display: none" class="add-photo2">Confirm</button>
+                <button id="add-photo"  type="submit" class="add-photo1">Add photo</button>
+                <button type="submit" id="confirm-photo" style="display: none" class="add-photo2">Confirm</button>
               </dialog>
             </div>
           </div>
