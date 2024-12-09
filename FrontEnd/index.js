@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // check if token aveliable
   displayContentOnLogin();
-
   // Get elements from the DOM
 
   const gallery = document.getElementsByClassName('gallery')[0];
@@ -131,16 +130,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     uploadImg.src = URL.createObjectURL(fileInput.files[0]);
   });
 
-  confirmButton.addEventListener('click', () => {
+  confirmButton.addEventListener('click', async () => {
     const itemTitle = document.getElementById('title-input');
-    const categories =document.getElementById('categories');
-    
-    console.log(itemTitle.value)
-    console.log(categories.value)
-    
-  });
+    const categories = document.getElementById('categories');
+   // Make sure the file input is selected correctly
 
-  getEditImgs(worksData, editGallary, allWorks);
+    
+
+    if (fileInput.files.length > 0) {
+        const file = URL.createObjectURL(fileInput.files[0]);
+        console.log(itemTitle.value, categories.value, file);
+
+        const token = sessionStorage.getItem('authToken');
+        console.log(token);
+
+        const formData = new FormData();
+        formData.append('title', itemTitle.value); // Map "title" to the provided schema
+        formData.append('image', file ); // "image" will be used to generate "imageUrl" on the server
+        formData.append('category', categories.value); // Correct the field name to match API schema
+
+        try {
+            const request = await fetch('http://localhost:5678/api/works', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    // Do not manually set the Content-Type header for FormData
+                },
+            });
+
+            if (!request.ok) {
+                throw new Error(`HTTP error! Status: ${request.status}`);
+            }
+
+            const data = await request.json();
+            console.log('Success:', data);
+        } catch (error) {
+            console.error('Error uploading:', error);
+        }
+    } else {
+        console.log('No file selected.');
+    }
+});
+
+
+  getEditImgs(worksData, editGallary);
 });
 
 function displayContentOnLogin() {
@@ -192,7 +226,7 @@ function getEditImgs(worksData, editGallary) {
     const div = document.createElement('div');
     div.setAttribute('data-custom', `${work.id}`);
     div.classList.add('edit-card');
-    div.style.backgroundImage = `url(${work.imageUrl})`
+    div.style.backgroundImage = `url(${work.imageUrl})`;
 
     const deleteButton = document.createElement('button');
     deleteButton.classList.add('span-svg');
@@ -211,24 +245,23 @@ function getEditImgs(worksData, editGallary) {
 
     deleteButton.addEventListener('click', async () => {
       const id = div.getAttribute('data-custom');
-      const token = sessionStorage.getItem('authToken')
+      const token = sessionStorage.getItem('authToken');
 
-      console.log(token)
+      console.log(token);
 
       if (confirm('Are you sure you want to delete this post?')) {
         try {
-          const response = await fetch(`http://localhost:5678/api/works/${id}`,{
+          const response = await fetch(`http://localhost:5678/api/works/${id}`, {
             method: 'DELETE',
             headers: {
-              "Content-type": "application/jason",
+              "Content-type": 'application/jason',
               "Authorization": `Bearer ${token}`,
-            }
+            },
           });
 
-          if(!response.ok){
-            throw new Error(`HTTP eeror! status: ${response.status}`)
+          if (!response.ok) {
+            throw new Error(`HTTP eeror! status: ${response.status}`);
           }
-
         } catch (error) {
           console.error('Error:', error);
         }
