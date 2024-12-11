@@ -91,6 +91,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const arrow = document.querySelector('.arrow-edit');
   const confirmButton = document.querySelector('#confirm-photo');
 
+  getEditImgs(worksData, editGallary);
+
   openButton.addEventListener('click', () => {
     modal.showModal();
   });
@@ -113,12 +115,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   addPhotoButton.addEventListener('click', () => {
     const confirmButton = document.querySelector('#confirm-photo');
     const uploadImgContaienr = document.querySelector('.add-to-gallery');
+    const selectElement = document.getElementById('categories')
     arrow.style.fill = 'black';
 
     editGallary.style.display = 'none';
     confirmButton.style.display = 'block';
     addPhotoButton.style.display = 'none';
     uploadImgContaienr.style.display = 'block';
+
+
+    // Create the default "Choose..." option
+    const defaultOption = document.createElement('option');
+    defaultOption.selected = true;
+    defaultOption.disabled = true;
+    defaultOption.textContent = 'Choose...';
+    selectElement.appendChild(defaultOption)
+
+    // Array of other options
+    const options = [
+      { value: 1, text: 'Objects' },
+      { value: 2, text: 'Apartments' },
+      { value: 3, text: 'Hotels & restaurants' },
+    ];
+
+    // Create and append other <option> elements
+    options.forEach((opt) => {
+      const option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.text;
+      selectElement.appendChild(option);
+    });
+
   });
 
   fileInput.addEventListener('change', () => {
@@ -130,51 +157,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     uploadImg.src = URL.createObjectURL(fileInput.files[0]);
   });
 
-  confirmButton.addEventListener('click', async () => {
+  confirmButton.addEventListener('click', async (event) => {
+    event.preventDefault();
+
     const itemTitle = document.getElementById('title-input');
     const categories = document.getElementById('categories');
-   // Make sure the file input is selected correctly
-
-    
+    // Make sure the file input is selected correctly
 
     if (fileInput.files.length > 0) {
-        const file = URL.createObjectURL(fileInput.files[0]);
-        console.log(itemTitle.value, categories.value, file);
+      const file = fileInput.files;
+      const token = sessionStorage.getItem('authToken');
 
-        const token = sessionStorage.getItem('authToken');
-        console.log(token);
+      const formData = new FormData();
+      formData.append('title', itemTitle.value); // Map "title" to the provided schema
+      formData.append('image', file[0]); // "image" will be used to generate "imageUrl" on the server
+      formData.append('category', categories.value); // Correct the field name to match API schema
+      
+      try {
+        const request = await fetch('http://localhost:5678/api/works', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            // Do not manually set the Content-Type header for FormData
+          },
+        });
 
-        const formData = new FormData();
-        formData.append('title', itemTitle.value); // Map "title" to the provided schema
-        formData.append('image', file ); // "image" will be used to generate "imageUrl" on the server
-        formData.append('category', categories.value); // Correct the field name to match API schema
-
-        try {
-            const request = await fetch('http://localhost:5678/api/works', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    // Do not manually set the Content-Type header for FormData
-                },
-            });
-
-            if (!request.ok) {
-                throw new Error(`HTTP error! Status: ${request.status}`);
-            }
-
-            const data = await request.json();
-            console.log('Success:', data);
-        } catch (error) {
-            console.error('Error uploading:', error);
+        if (!request.ok) {
+          throw new Error(`HTTP error! Status: ${request.status}`);
         }
+
+        const data = await request.json();
+        console.log('Success:', data);
+
+        reRenderWorks();
+
+      } catch (error) {
+        console.error('Error uploading:', error);
+      }
     } else {
-        console.log('No file selected.');
+      console.log('No file selected.');
     }
-});
+  });
 
-
-  getEditImgs(worksData, editGallary);
+  
 });
 
 function displayContentOnLogin() {
@@ -221,6 +247,7 @@ loginLink.addEventListener('click', () => {
   }
 });
 
+
 function getEditImgs(worksData, editGallary) {
   worksData.forEach((work) => {
     const div = document.createElement('div');
@@ -254,8 +281,94 @@ function getEditImgs(worksData, editGallary) {
           const response = await fetch(`http://localhost:5678/api/works/${id}`, {
             method: 'DELETE',
             headers: {
-              "Content-type": 'application/jason',
-              "Authorization": `Bearer ${token}`,
+              'Content-type': 'application/jason',
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP eeror! status: ${response.status}`);
+          }
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      }
+    });
+
+    deleteButton.appendChild(svg);
+
+    // Assuming you want to append the SVG to the body or some other element
+    div.appendChild(deleteButton);
+
+    editGallary.appendChild(div);
+  });
+}
+// re rendering imgs 
+
+async function reRenderWorks () {
+  const worksData = await fetchWorks();
+  const categoriesData = await fetchCategories();
+
+  const gallery = document.getElementsByClassName('gallery')[0];
+  const editGallary = document.querySelector('.edit-gallery');
+
+  let works = '';
+  worksData.forEach((work) => {
+    const category = categoriesData
+      .find((element) => element.id === work.category.id)
+      .name.replace(/\s+/g, '-')
+      .toLowerCase();
+    works += `
+    <figure data-custom="${work.id}" class="work-item ${category}">
+      <img src=${work.imageUrl} alt=${work.title} />
+      <figcaption>${work.title}</figcaption>
+    </figure> `;
+  });
+
+  gallery.innerHTML = works;
+  const allWorks = document.querySelectorAll('.work-item');
+
+  reRenderEditImgs(worksData, editGallary)
+}
+
+async function reRenderEditImgs(worksData, editGallary) {
+
+  editGallary.innerHTML = ''
+
+  worksData.forEach((work) => {
+    const div = document.createElement('div');
+    div.setAttribute('data-custom', `${work.id}`);
+    div.classList.add('edit-card');
+    div.style.backgroundImage = `url(${work.imageUrl})`;
+
+    const deleteButton = document.createElement('button');
+    deleteButton.classList.add('span-svg');
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 448 512');
+    svg.classList.add('deletesvg');
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute(
+      'd',
+      'M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z'
+    );
+
+    svg.appendChild(path);
+
+    deleteButton.addEventListener('click', async () => {
+      const id = div.getAttribute('data-custom');
+      const token = sessionStorage.getItem('authToken');
+
+      console.log(token);
+
+      if (confirm('Are you sure you want to delete this post?')) {
+        try {
+          const response = await fetch(`http://localhost:5678/api/works/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-type': 'application/jason',
+              Authorization: `Bearer ${token}`,
             },
           });
 
